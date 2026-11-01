@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CLASH5 - CROSS DIMENSION</title>
+    <!-- リンク共有時のプレビュー(LINE・X・Discord等、2026-10-01追加)。ここが無いと、プレビューに画面の文字(NOW LOADING...等)が出てしまう。
+         og:imageとog:urlは絶対URLである必要がある。画像は1200×630(assets/images/ogp.jpg、タイトルロゴから作成)。 -->
+    <meta name="description" content="読み合いカードバトルでコンボをキメろ！スマホブラウザで遊べる格闘カードゲーム登場！">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CLASH5 - CROSS DIMENSION">
+    <meta property="og:title" content="CLASH5 - CROSS DIMENSION">
+    <meta property="og:description" content="読み合いカードバトルでコンボをキメろ！スマホブラウザで遊べる格闘カードゲーム登場！">
+    <meta property="og:url" content="https://kotaroborn.github.io/clash5/">
+    <meta property="og:image" content="https://kotaroborn.github.io/clash5/assets/images/ogp.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/style.min.css?v=1001"> <!-- 配信用の軽量版。編集はcss/style.cssで行い、tools/build.shで作り直す(2026-10-02) -->
+
+    <!-- 技名ポップ用の8bit風フォント(Press Start 2P、SIL OFL。2026-10-03に手書き風Permanent Markerから変更)。
+         ゲームに同梱し(assets/fonts/)、ネット環境に左右されず表示する。canvasで使うため先読みしておく -->
+    <link rel="preload" href="assets/fonts/PressStart2P-Regular.ttf" as="font" type="font/ttf" crossorigin>
+
+    <!-- ホーム画面追加時のアイコン・見た目設定。実際のアイコン画像(下記パス)は別途用意が必要(ASSETS.md参照)。
+         画像が未配置でも404になるだけでエラーにはならず、通常のブラウザ表示には一切影響しない。 -->
+    <link rel="apple-touch-icon" href="assets/images/icons/apple-touch-icon.png"> <!-- iOSのホーム画面アイコン(180×180推奨) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/images/icons/icon-512.png">
+    <link rel="manifest" href="manifest.json"> <!-- Android/Chromeの「ホーム画面に追加」用 -->
+    <meta name="apple-mobile-web-app-capable" content="yes"> <!-- iOSでホーム画面から起動した際、Safariのアドレスバー等を隠してフルスクリーン風にする -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CLASH5"> <!-- iOSホーム画面アイコン下のラベル(長い正式名称だと折り返し・省略されるため短縮表記) -->
+    <meta name="theme-color" content="#000000"> <!-- Android等でブラウザのアドレスバー等を黒に合わせる -->
+</head>
+<body>
+<!-- 横画面・PCで見たときの左右の余白(2026-10-08): ぼかし背景+左上ロゴ。余白が無い縦持ちスマホでは出ない(body.has-side) -->
+<div id="sideBg"></div>
+<img id="sideLogo" src="assets/images/logo/title_logo.PNG" alt="CLASH5 - CROSS DIMENSION">
+<img id="sideRps" src="assets/images/ui/howto.PNG" alt=""> <!-- 右上: 3すくみの図(HOW TOと同じ画像) -->
+<div id="sideTech"></div> <!-- 右の余白: ワザ一覧(HOW TOのTECHNIQUESと同じ内容、常時表示。script.jsのrenderSideTech) -->
+<!-- 左の余白: キー操作の案内(Key Guide)。配信画面向けで、スマホ(余白なし)では出ない。操作を変えたらscript.jsのonGameKeydownとここを揃える -->
+<div id="sideKeys">
+    <div class="sk-title">KEY GUIDE</div>
+    <div class="sk-head">☆MENU / STORY</div>
+    <div class="sk-row"><span>ボタンを選ぶ</span><span class="sk-keys"><kbd>↑</kbd> / <kbd>↓</kbd></span></div>
+    <div class="sk-row"><span>決定 / 次へ</span><span class="sk-keys"><kbd>Enter</kbd> or <kbd>Space</kbd></span></div>
+    <div class="sk-row"><span>キャラを選ぶ</span><span class="sk-keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span></div>
+    <div class="sk-row"><span>HOW TO</span><span class="sk-keys"><kbd>H</kbd></span></div>
+    <div class="sk-row"><span>OPTION</span><span class="sk-keys"><kbd>O</kbd></span></div>
+    <div class="sk-row"><span>SKIP</span><span class="sk-keys"><kbd>S</kbd></span></div>
+    <div class="sk-row"><span>閉じる / いいえ</span><span class="sk-keys"><kbd>Esc</kbd></span></div>
+    <div class="sk-head">☆DECK BUILD</div>
+    <div class="sk-row"><span>カードを増やす</span><span class="sk-keys"><kbd>P</kbd> / <kbd>U</kbd> / <kbd>G</kbd></span></div>
+    <div class="sk-row"><span>カードを減らす</span><span class="sk-keys"><kbd>Shift</kbd> + <kbd>P</kbd> / <kbd>U</kbd> / <kbd>G</kbd></span></div>
+    <div class="sk-row"><span>FIGHT</span><span class="sk-keys"><kbd>Enter</kbd> or <kbd>Space</kbd></span></div>
+    <div class="sk-head">☆BATTLE</div>
+    <div class="sk-row"><span>手札のカードを場に出す</span><span class="sk-keys"><kbd>1</kbd>〜<kbd>5</kbd></span></div>
+    <div class="sk-row"><span>手札のPUNCH / UPPER / GUARD を出す</span><span class="sk-keys"><kbd>P</kbd> / <kbd>U</kbd> / <kbd>G</kbd></span></div>
+    <div class="sk-row"><span>GO!</span><span class="sk-keys"><kbd>Enter</kbd> or <kbd>Space</kbd></span></div>
+    <div class="sk-row"><span>相手の手の履歴 開閉</span><span class="sk-keys"><kbd>L</kbd></span></div>
+    <div class="sk-row"><span>CANCEL</span><span class="sk-keys"><kbd>Esc</kbd> or <kbd>Backspace</kbd> or <kbd>C</kbd></span></div>
+</div>
+</div>
+<div id="appRoot">
+
+<!-- 起動直後、最低限の画像(キャラ基本ポーズ)が揃うまでの間、真っ先に表示する読み込み中の目印。
+     JSの実行や他の画像の読み込みを一切待たず、HTMLの解析だけで即座に表示される。boot()完了時にフェードアウトする。
+     ゲージはjs/script.js本体(ファイルサイズが最も大きく、これのダウンロード完了までboot()が動かない)の
+     取得進捗を、下のインラインスクリプト(fetchのReadableStreamで実バイト数を追跡)が更新する -->
+<div id="nowLoadingScreen">
+    <div id="nowLoadingText">NOW LOADING...</div>
+    <div id="nowLoadingBarTrack"><div id="nowLoadingBar"></div></div>
+    <div id="nowLoadingPercent">0%</div>
+</div>
+
+<!-- バトル開始前/ストーリー(本編・SUB STORY)開始前など、画面遷移の直前に必要な画像の読み込みが間に合っていない
+     場合にだけ一時的に重ねる、簡易版のローディング表示(起動時のNOW LOADINGとは別)。ゲージは持たずテキストのみ。
+     読み込みが既に完了している/短時間で終わる場合は表示自体されない(.showクラスが付いた時のみ表示)。 -->
+<div id="sceneLoadingScreen">
+    <div id="sceneLoadingText">LOADING...</div>
+</div>
+
+<!-- ロゴシーン: BORN MAGAZINE presents。フェードイン→2秒表示→フェードアウトしてプロローグへ。画面タップでスキップ可能 -->
+<div id="sceneLogo" class="scene active" onclick="skipLogo()">
+    <div id="logoContent">
+        <img id="logoImg" src="assets/images/logo/logo.PNG" alt="BORN MAGAZINE"
+             onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+        <div id="logoFallback">
+            <div class="logo-main">BORN MAGAZINE</div>
+            <div class="logo-sub">presents</div>
+        </div>
+    </div>
+</div>
+
+<!-- プロローグシーン: シネマサイズの画像+1文字ずつのテキスト演出を4画面。終わったら自動でタイトルへ -->
+<div id="scenePrologue" class="scene">
+    <div id="prologueContent" class="cine-block">
+        <div id="prologueImgArea" class="cine-img"><div id="prologueImgFallback" class="cine-img-fallback"></div><div id="prologueFlash" class="cine-flash"></div></div>
+        <div id="prologueTextBox" class="cine-textbox">
+            <p id="prologueText" class="cine-text"></p>
+        </div>
+    </div>
+    <button id="skipBtn" class="text-btn" onclick="skipPrologue()">▶︎SKIP</button>
+</div>
+
+<!-- ストーリーシーン(STORY MODE専用): デッキ編成の前に挟む導入。プロローグと同じ仕組みを流用、3画面 -->
+<div id="sceneStory" class="scene">
+    <div id="storyContent" class="cine-block" onclick="onStoryTap()">
+        <div id="storyImgArea" class="cine-img"><div id="storyImgFallback" class="cine-img-fallback"></div><div id="storySpotlight" class="cine-spotlight"></div><div id="storyFlash" class="cine-flash" style="z-index:2;"></div><div id="storyHiddenTap" onclick="event.stopPropagation(); onStoryHiddenTap();" style="position:absolute; top:0; left:0; width:20%; height:20%;"></div><img id="storyHiddenTapSparkle" src="assets/images/effects/sparkle.PNG" alt="" onerror="this.dataset.missing='1';"></div>
+        <div id="storyTextBox" class="cine-textbox">
+            <p id="storyText" class="cine-text"></p>
+        </div>
+    </div>
+    <button id="skipStoryBtn" class="text-btn" onclick="skipStorySequence()">▶︎SKIP</button>
+</div>
+
+<!-- タイトルシーン: ロゴは仮表示（title_logo.PNGが見つかれば自動で画像に切り替わる）。
+     画面タップで、ロゴ合流アニメーションをスキップしてくっきり表示まで進める -->
+<div id="sceneTitle" class="scene" onclick="skipTitleLogoIntro()">
+    <div class="scene-inner" style="justify-content:flex-start; padding-top:18%;">
+        <div class="title-logo-wrap" id="titleLogoWrap">
+            <img id="titleLogoEchoL" class="title-logo-echo" src="assets/images/logo/title_logo.PNG" alt=""
+                 onerror="this.style.display='none';">
+            <img id="titleLogoEchoR" class="title-logo-echo" src="assets/images/logo/title_logo.PNG" alt=""
+                 onerror="this.style.display='none';">
+            <div id="titleLogoFlash"></div>
+            <img id="titleLogoImg" src="assets/images/logo/title_logo.PNG" alt="CLASH5 - CROSS DIMENSION" style="opacity:0;"
+                 onerror="this.style.display='none'; document.getElementById('titleLogoFallback').style.display='block'; document.getElementById('titleLogoEchoL').style.display='none'; document.getElementById('titleLogoEchoR').style.display='none';">
+            <div id="titleLogoFallback" class="title-logo-fallback">
+                <div class="title-logo-fallback-main">CLASH5</div>
+                <div class="title-logo-fallback-sub">CROSS DIMENSION</div>
+            </div>
+        </div>
+    </div>
+    <!-- STORY MODE(2026-10-02、旧NEW GAME。CONTINUEは廃止): STORY 2以降へ進んだことがあれば、どの章から遊ぶか選ぶウィンドウを出す -->
+    <button id="startBtn" class="text-btn" onclick="tapFlickerThen(this, () => goStoryMode())" disabled>STORY MODE</button>
+    <button id="trainingBtn" class="text-btn" onclick="tapFlickerThen(this, () => goTrainingBattle())" disabled>TRAINING MODE</button>
+    <button id="versusBtn" class="text-btn" onclick="tapFlickerThen(this, () => goVersusSelect())" disabled style="display:none;">LOCAL V.S.</button>
+    <button id="onlineBtn" class="text-btn" onclick="tapFlickerThen(this, () => goOnlineLobby())" disabled style="display:none;">ONLINE V.S.</button>
+    <button id="rushBtn" class="text-btn" onclick="tapFlickerThen(this, () => goRushStart())" disabled style="display:none;">BATTLE RUSH</button>
+    <button id="bonusContentsBtn" class="text-btn" onclick="openBonusContents()" style="display:none;">BONUS</button>
+    <button id="optionBtn" class="text-btn" onclick="openOption()" disabled>OPTION</button>
+    <button class="howto-btn howto-corner" onclick="openHowTo()">HOW<br>TO</button>
+    <div class="title-copyright">©BORN MAGAZINE 2026</div>
+    <div class="title-version">ver. 1.0.1</div> <!-- 2026-10-03: ロゴ直下から、画面下の中央(©表記と同じ高さ)へ移動 -->
+</div>
+
+<!-- デッキ編成シーン: 21枚固定・内訳自由 -->
+<div id="sceneDeck" class="scene">
+    <div class="scene-inner" style="justify-content:flex-start; padding-top:14%; gap:20px;">
+        <p class="prologue-text deck-title">DECK BUILD</p> <!-- 2026-10-04: 「デッキ編成（合計21枚）」から変更 -->
+        <div class="deck-row">
+            <img class="deck-card-icon" src="assets/images/cards/card_P.PNG" alt="" onerror="this.style.visibility='hidden';">
+            <span class="deck-label">PUNCH</span>
+            <button class="deck-btn" onclick="adjustDeck('PUNCH',-1)">−</button>
+            <span class="deck-count" id="deckCountPUNCH">7</span>
+            <button class="deck-btn" onclick="adjustDeck('PUNCH',1)">＋</button>
+        </div>
+        <div class="deck-row">
+            <img class="deck-card-icon" src="assets/images/cards/card_U.PNG" alt="" onerror="this.style.visibility='hidden';">
+            <span class="deck-label">UPPER</span>
+            <button class="deck-btn" onclick="adjustDeck('UPPER',-1)">−</button>
+            <span class="deck-count" id="deckCountUPPER">7</span>
+            <button class="deck-btn" onclick="adjustDeck('UPPER',1)">＋</button>
+        </div>
+        <div class="deck-row">
+            <img class="deck-card-icon" src="assets/images/cards/card_G.PNG" alt="" onerror="this.style.visibility='hidden';">
+            <span class="deck-label">GUARD</span>
+            <button class="deck-btn" onclick="adjustDeck('GUARD',-1)">−</button>
+            <span class="deck-count" id="deckCountGUARD">7</span>
+            <button class="deck-btn" onclick="adjustDeck('GUARD',1)">＋</button>
+        </div>
+        <p id="deckTotalText">TOTAL 21/21</p>
+    </div>
+    <button id="deckConfirmBtn" class="text-btn" onclick="tapFlickerThen(this, () => goBattleStart())">FIGHT</button>
+    <button class="howto-btn howto-corner" onclick="openHowTo()">HOW<br>TO</button>
+    <!-- デッキ編成中のOPTION(2026-10-02)。中の戻るボタンはRETURN TO TITLEのみ(updateOptionUI) -->
+    <button class="howto-btn howto-corner option-corner" onclick="playSE('se_menu_open'); openOption();">OPT<br>ION</button>
+</div>
+
+<!-- ローカル対戦(VERSUS)のキャラ選択: 上半分=2P(180°回転)、下半分=1P。両者がREADYを押すとバトルへ -->
+<div id="sceneVersusSelect" class="scene">
+    <div id="vsSelHalfE" class="vs-sel-half vs-sel-half-e">
+        <div class="vs-sel-head"><span class="vs-sel-badge">2P</span><span class="vs-sel-name" id="vsSelNameE"></span></div>
+        <div class="vs-sel-deck" id="vsSelDeckE"></div>
+        <div class="vs-sel-grid" id="vsSelGridE"></div>
+        <button class="vs-ready-btn" id="vsSelReadyE" onclick="vsToggleSelectReady('E')">READY</button>
+        <button class="howto-btn vs-sel-howto" onclick="openHowToVs('E')">HOW<br>TO</button>
+    </div>
+    <div class="vs-sel-center">
+        <button class="vs-sel-back" onclick="vsSelectBackToTitle()">✕</button>
+        <div class="vs-sel-vs">VS</div>
+    </div>
+    <div id="vsSelHalfP" class="vs-sel-half vs-sel-half-p">
+        <div class="vs-sel-head"><span class="vs-sel-badge">1P</span><span class="vs-sel-name" id="vsSelNameP"></span></div>
+        <div class="vs-sel-deck" id="vsSelDeckP"></div>
+        <div class="vs-sel-grid" id="vsSelGridP"></div>
+        <button class="vs-ready-btn" id="vsSelReadyP" onclick="vsToggleSelectReady('P')">READY</button>
+        <button class="howto-btn vs-sel-howto" onclick="openHowToVs('P')">HOW<br>TO</button>
+    </div>
+    <div id="vsSelFight">FIGHT!</div>
+</div>
+
+<!-- オンライン対戦(ONLINE V.S.、2026-10-03): 部屋を作る/入る → 相手待ち → キャラ選択。バトル自体は通常のバトルシーンを使う -->
+<div id="sceneOnline" class="scene">
+    <div class="online-head">
+        <button class="vs-sel-back" onclick="onlineBackToTitle()">✕</button>
+        <div class="online-title">ONLINE V.S.</div>
+    </div>
+    <div id="onPanelLobby" class="online-panel">
+        <!-- 名前と自分の勝敗(2026-10-03): 英数字4文字。4文字そろうとその場で保存。対戦相手にも見える -->
+        <div class="online-name-row">
+            <span class="online-name-label">YOUR NAME</span>
+            <input type="text" id="onNameInput" class="gift-code-input online-name-input" maxlength="4" autocapitalize="characters" autocomplete="off" spellcheck="false" oninput="if (!event.isComposing) onlineNameInput(this)" oncompositionend="onlineNameInput(this)" onblur="onlineNameBlur(this)" onkeydown="if (event.key === 'Enter') this.blur()"> <!-- 変換中(日本語キーボード・予測変換)は書き換えない(2026-10-03、同じ文字が重なる不具合の修正) -->
+            <span id="onMyRecord" class="online-my-record"></span> <!-- 2段(n WIN / n LOSE)で名前欄の高さに収める -->
+        </div>
+        <!-- 遊び方は2種類: ランダムマッチ / 友だちと(部屋を作る・入る)。後者はCREATE・JOINを1つの枠にまとめる(2026-10-03) -->
+        <div class="online-card online-card-random">
+            <button class="vs-ready-btn online-main-btn online-random-btn" onclick="onlineStartSearch()">RANDOM MATCH</button>
+            <div class="online-note">ボタンを押すだけで、待っている相手と自動で対戦します</div>
+        </div>
+        <div class="online-or">OR</div>
+        <div class="online-card online-card-friend">
+            <div class="online-card-title">FRIEND MATCH</div>
+            <button class="vs-ready-btn online-main-btn" onclick="onlineCreateRoom()">CREATE ROOM</button>
+            <div class="online-note">部屋を作り、出てきた4桁の番号を相手に伝えます</div>
+            <div class="online-card-sep"></div>
+            <div class="online-join-row">
+                <input type="text" id="onJoinCode" class="gift-code-input online-code-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0000">
+                <button class="vs-ready-btn online-join-btn" onclick="onlineJoinRoom()">JOIN ROOM</button>
+            </div>
+            <div class="online-note">相手から聞いた番号を入れて入室します</div>
+        </div>
+        <div id="onLobbyMsg" class="online-msg"></div>
+    </div>
+    <div id="onPanelHost" class="online-panel">
+        <div class="online-label">ROOM CODE</div>
+        <div id="onRoomCode" class="online-room-code">0000</div>
+        <div class="online-note">この番号を相手に伝えてください<br>相手が入室すると始まります</div>
+        <div class="online-waiting">WAITING FOR RIVAL...</div>
+        <button class="vs-sub-btn" onclick="onlineCancelHost()">CANCEL</button>
+    </div>
+    <!-- ランダムマッチ(2026-10-03、段階3): 相手をさがしている間。見つからなければVS CPU / KEEP SEARCHINGを出す -->
+    <div id="onPanelSearch" class="online-panel">
+        <div class="online-label">RANDOM MATCH</div>
+        <div id="onSearchText" class="online-search-text">SEARCHING...</div>
+        <div id="onSearchNote" class="online-note">対戦相手をさがしています</div>
+        <div id="onSearchCpu" class="online-cpu-box">
+            <div class="online-note">相手が見つかりません<br>CPUと戦うか、もう少しさがすかを選んでください</div>
+            <button class="vs-ready-btn online-main-btn" onclick="onlineStartCpu()">VS CPU</button>
+            <button class="vs-sub-btn" onclick="onlineKeepSearching()">KEEP SEARCHING</button>
+        </div>
+        <button class="vs-sub-btn" onclick="onlineCancelSearch()">CANCEL</button>
+    </div>
+    <div id="onPanelSelect" class="online-panel">
+        <div id="onScore" class="online-score"></div>
+        <div id="onSelTimer" class="online-sel-timer"></div> <!-- キャラ選択の残り時間(2026-10-04) -->
+        <div class="vs-sel-head"><span class="vs-sel-badge">YOU</span><span class="vs-sel-name" id="onSelName"></span></div>
+        <div class="vs-sel-deck" id="onSelDeck"></div>
+        <div class="vs-sel-grid" id="onSelGrid"></div>
+        <button class="vs-ready-btn" id="onSelReady" onclick="onlineToggleReady()">READY</button>
+        <div id="onRivalStatus" class="online-rival"></div>
+    </div>
+    <div id="onPanelMsg" class="online-panel">
+        <div id="onMsgText" class="online-msg-big"></div>
+        <button class="vs-ready-btn" onclick="onlineBackToLobby()">OK</button>
+    </div>
+    <div id="onSelFight"><div class="online-fight-text">FIGHT!</div><div id="onFightNames" class="online-fight-names"></div></div>
+    <!-- マッチング画面(ロビー・相手待ち・キャラ選択)でも、HOW TOとOPTIONを常に出す(2026-10-03)。OPTIONの中のRETURN TO TITLEは出さない(✕で戻る) -->
+    <button class="howto-btn howto-corner" onclick="playSE('se_menu_open'); openHowTo();">HOW<br>TO</button>
+    <button class="howto-btn howto-corner option-corner" onclick="playSE('se_menu_open'); openOption();">OPT<br>ION</button>
+</div>
+
+<!-- バトルシーン -->
+<div id="sceneBattle" class="scene">
+<!-- ローカル対戦(VERSUS)専用: 上半分=2P側。body.versus-layoutの時だけ表示し、要素全体を180°回転させる。
+     2Pから見て、画面中央側(このdivの先頭)がcanvas、手前側(末尾)が手札・ボタン -->
+<div id="vsTop">
+    <div id="vsGameArea2" class="vs-game-area">
+        <canvas id="cvs2" width="960" height="560"></canvas>
+        <div id="vsEnemySlots2" class="vs-enemy-slots"></div>
+        <div id="vsBattleStartText2" class="vs-battle-start">
+            <div id="vsBattleStageLabel2" class="vs-battle-stage"></div>
+            <div class="vs-battle-start-label">BATTLE START</div>
+        </div>
+        <div id="vsResult2" class="vs-result"></div>
+    </div>
+    <div id="vsUi2" class="vs-ui">
+        <div id="vsRequiredLabel2" class="vs-required-label"></div>
+        <div id="vsSlots2" class="vs-slots"></div>
+        <div class="vs-hand-wrap">
+            <div id="vsHandRow2" class="vs-hand-row"></div>
+            <div id="vsDeckInfo2" class="vs-deck-info">DECK 21/21</div>
+            <div id="vsDeckRefreshLabel2" class="vs-deck-refresh">Refresh</div>
+        </div>
+        <div class="vs-controls">
+            <button id="vsClrBtn2" onclick="vsResetHands2()" disabled><span class="cl-a">CAN</span><span class="cl-b">CEL</span></button> <!-- LOCAL V.S.では2行(CAN/CEL)にする(2026-10-04) -->
+            <button id="vsGoBtn2" onclick="vsGo2()" disabled>GO!</button>
+        </div>
+        <div id="vsGate2" class="vs-gate"></div>
+        <button id="vsHowToBtn2" class="howto-btn vs-howto-btn" onclick="openHowToVs('E')">HOW<br>TO</button>
+    </div>
+</div>
+<div id="gameHeader">
+    <div class="hp-col">
+        <div class="vs-name-rot" id="vsNameRotP"></div>
+        <div class="hp-wrap">
+            <div class="hp-bar-bg"></div>
+            <div class="hp-yellow" id="hpP_y" style="width:100%"></div>
+            <div class="hp-red" id="hpP" style="width:100%"></div>
+        </div>
+        <div class="char-name" id="playerName">VAL</div>
+    </div>
+    <div class="vs-turn-col">
+        <div id="vsTurn2" class="vs-turn-rot"></div>
+        <div id="turnDisplay">TURN<br><span id="turnNumber">0</span><br><span id="turnStageLabel"></span></div>
+    </div>
+    <div class="hp-col">
+        <div class="vs-name-rot" id="vsNameRotE"></div>
+        <div class="hp-wrap">
+            <div class="hp-bar-bg"></div>
+            <div class="hp-yellow" id="hpE_y" style="width:100%"></div>
+            <div class="hp-red" id="hpE" style="width:100%"></div>
+        </div>
+        <div class="char-name" id="enemyName" onclick="onlineToggleRivalCard()">ENEMY</div> <!-- ONLINE V.S.ではタップで相手の名前・勝敗(2026-10-03) -->
+    </div>
+</div>
+<div id="gameArea">
+    <canvas id="cvs" width="960" height="560"></canvas>
+    <div id="enemySlots"></div>
+    <div id="enemyHistory" onclick="toggleEnemyHistory()"></div> <!-- 直前のターンで相手が出した手(右下に小さく。2026-10-16) -->
+    <div id="battleStartText">
+        <div id="battleStageLabel"></div>
+        <div id="battleStartLabel">BATTLE START</div>
+    </div>
+    <div id="vsResult1" class="vs-result"></div>
+    <div id="onlineStatus"></div> <!-- オンライン対戦: 相手待ち等の表示(2026-10-03) -->
+    <div id="onlineTimer"></div> <!-- オンライン対戦: 入力の残り時間(2026-10-03、段階4) -->
+    <div id="onlineRivalCard"></div> <!-- オンライン対戦: 相手の名前をタップした時の、名前と勝敗(2026-10-03) -->
+</div>
+<div id="ui">
+    <div id="requiredHandSizeLabel" style="display:none;"></div>
+    <div id="slots"></div>
+    <div id="handWrap">
+        <div id="handRow"></div>
+        <div id="deckInfo">DECK 21/21</div>
+        <div id="deckRefreshLabel">Refresh</div>
+    </div>
+    <div class="controls">
+        <button id="howToBtn" class="howto-btn" onclick="playSE('se_menu_open'); openHowTo();">HOW<br>TO</button>
+        <button id="optionBattleBtn" class="howto-btn" onclick="playSE('se_menu_open'); openOption();">OPT<br>ION</button>
+        <button id="speedToggleBtn" class="howto-btn speed-toggle-btn" onclick="toggleBattleSpeed()" style="visibility:hidden;">▶︎</button>
+        <div class="fn-group">
+            <button onclick="resetHands()" id="clrBtn" disabled><span class="cl-a">CAN</span><span class="cl-b">CEL</span></button> <!-- 通常は1行。LOCAL V.S.では2行(2026-10-04) -->
+            <button onclick="resolveTurn()" id="goBtn" disabled>GO!</button>
+        </div>
+    </div>
+    <div id="vsGate1" class="vs-gate"></div>
+    <button id="vsHowToBtn1" class="howto-btn vs-howto-btn" onclick="openHowToVs('P')">HOW<br>TO</button>
+    <div id="onlineGate"></div> <!-- オンライン対戦: 決着後のREMATCH/TITLEボタン(手札・ボタン部分を覆う、2026-10-03) -->
+</div>
+<!-- 決着オーバーレイ: ヘッダー・場・手札すべてを含む画面全体を覆う -->
+<div id="resultOverlay">
+    <div id="resultNoDamageText" style="display:none;">PERFECT!!</div>
+    <div id="resultPerfectText" style="display:none;">COMBO PERFECT!!</div>
+    <div id="resultText"></div>
+    <!-- 勝利後のRESULT(2026-10-02): STORY MODE・EXTRA BATTLEの勝利時、YOU WINの下に小さくまとめて出す。NEXTで次へ進む -->
+    <div id="battleResult">
+        <div class="br-title">RESULT</div>
+        <div class="br-cards">
+            <div class="br-card"><img src="assets/images/cards/card_P.PNG" alt="PUNCH"><span id="brPunch">0</span></div>
+            <div class="br-card"><img src="assets/images/cards/card_U.PNG" alt="UPPER"><span id="brUpper">0</span></div>
+            <div class="br-card"><img src="assets/images/cards/card_G.PNG" alt="GUARD"><span id="brGuard">0</span></div>
+        </div>
+        <div class="br-stats">
+            <div class="br-stat"><span>TURNS</span><span id="brTurns">0</span></div>
+            <div class="br-stat"><span>MAX COMBO</span><span id="brCombo">0</span></div>
+            <div class="br-stat"><span>TECHNIQUES</span><span id="brTechs">0</span></div>
+            <div class="br-stat"><span>READS WON</span><span id="brRps">0 / 0</span></div>
+        </div>
+        <button id="battleResultNextBtn">NEXT</button>
+    </div>
+    <button id="continueBtn" onclick="goDeckBuild()">CONTINUE</button>
+    <button id="backTitleBtn" onclick="goLogo()">RETURN TO TITLE</button>
+</div>
+<!-- BATTLE RUSHのRESULT: 倒れた時点(または最後の25人目撃破時)に表示。ボタンは最下部に固定し、項目が多くてもはみ出さないようにする -->
+<div id="rushResultOverlay">
+    <div class="rush-result-body">
+        <div id="rushResultClear" style="display:none;">CLEAR!!</div>
+        <div class="rush-result-title">RESULT</div>
+        <div class="rush-result-row">
+            <div class="rush-result-label">KILLS</div>
+            <div class="rush-result-value" id="rushResultKills">0 / 100</div>
+            <div class="rush-result-sub"><span id="rushBestKills">BEST 0</span><span class="rush-new" id="rushNewKills">NEW RECORD!</span></div>
+        </div>
+        <div class="rush-result-row">
+            <div class="rush-result-label">TIME</div>
+            <div class="rush-result-value" id="rushResultTime">0:00.0</div>
+            <div class="rush-result-sub"><span id="rushBestTime">BEST --:--.-</span><span class="rush-new" id="rushNewTime">NEW RECORD!</span></div>
+        </div>
+        <div class="rush-result-row" id="rushRankRow" style="display:none;"> <!-- 称号: クリアした時だけ(クリアタイムで決まる、2026-10-15) -->
+            <div class="rush-result-label">TITLE</div>
+            <div class="rush-result-value" id="rushResultRank">ROOKIE</div>
+        </div>
+        <div class="rush-result-row">
+            <div class="rush-result-label">MAX COMBO</div>
+            <div class="rush-result-value" id="rushResultCombo">0</div>
+            <div class="rush-result-sub"><span id="rushBestCombo">BEST 0</span><span class="rush-new" id="rushNewCombo">NEW RECORD!</span></div>
+        </div>
+    </div>
+    <div class="rush-result-btns">
+        <button id="rushShareBtn" onclick="rushShareOnX()" style="display:none;">SHARE ON X</button> <!-- クリアした時だけ(2026-10-15) -->
+        <button id="rushRetryBtn" onclick="rushRetry()">RETRY</button>
+        <button id="rushTitleBtn" onclick="rushBackToTitle()">TITLE</button>
+    </div>
+</div>
+</div>
+
+<!-- エンディングシーン: 5人目撃破後のみ再生。プロローグ/ストーリーと同じ仕組み(画像+1文字ずつのテキスト)で5画面 -->
+<div id="sceneEnding" class="scene">
+    <div id="endingContent" class="cine-block">
+        <div id="endingImgArea" class="cine-img"><div id="endingImgFallback" class="cine-img-fallback"></div></div>
+        <div id="endingTextBox" class="cine-textbox">
+            <p id="endingText" class="cine-text"></p>
+        </div>
+    </div>
+</div>
+
+<!-- エンドロールシーン: エンディング5画面終了後、下から上へスクロールするクレジット表示 -->
+<div id="sceneCredits" class="scene">
+    <div id="creditsScroll">
+        <p class="credits-line credits-title">GAME DESIGN</p>
+        <p class="credits-line">こたろ</p>
+        <p class="credits-line credits-title">PROGRAMMING</p>
+        <p class="credits-line">Claude (Sonnet 5)</p>
+        <p class="credits-line credits-title">ART/CHARACTERS DESIGN</p>
+        <p class="credits-line">こたろ</p>
+        <p class="credits-line">Chat GPT(5.6 Sol)</p>
+        <p class="credits-line credits-title">SOUND DESIGN</p>
+        <p class="credits-line">sexy隊長</p>
+        <p class="credits-line">Gemini (3.6 Thinking)</p>
+        <p class="credits-line credits-title">CHAPTER TITLE ANIMATION</p>
+        <p class="credits-line">文字画像APNGメーカー</p>
+        <p class="credits-line">くま。TRPG WEBツール観測所</p>
+        <p class="credits-line credits-title">SPECIAL THANKS</p>
+        <p class="credits-line">To all the readers of</p>
+        <p class="credits-line">BORN MAGAZINE</p>
+        <p class="credits-line credits-title" style="margin-top:60px;">CLASH 5</p>
+        <p class="credits-line">CROSS DIMENSION</p>
+        <p class="credits-line credits-title" style="margin-top:60px;">THANK YOU FOR PLAYING!</p>
+    </div>
+</div>
+
+<!-- FIN画面: エンドロール終了後、真っ黒な画面の中央にFIN.を表示し、10秒後にフェードアウトしてタイトルへ戻る -->
+<div id="sceneFin" class="scene">
+    <div id="finText">FIN.</div>
+</div>
+
+<!-- サブストーリーバトル(EXTRA BATTLE)勝利後のエピローグ末尾に出す、FIN.と同じ演出の簡易版終了画面 -->
+<div id="sceneSubStoryEnd" class="scene" onclick="onSubStoryEndTap()">
+    <div id="subStoryEndText">SUB STORY<br><span id="subStoryEndCharName"></span><br>END</div>
+    <!-- substory_end_{番号}.PNG(APNG可)があれば、上の文字の代わりにこの画像を出す(2026-10-02) -->
+    <img id="subStoryEndImg" class="apng-card-img" alt="" style="display:none;">
+    <div id="subStoryEndHint">▼</div>
+</div>
+
+<!-- HOW TOポップアップ: appRoot直下に置き、どのシーンからでも表示できるようにする -->
+<div id="howToOverlay" class="popup-overlay" onclick="closeHowToBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="closeHowTo()">×</button>
+        <!-- HOW TO BATTLE(基本) -->
+        <div class="howto-content howto-scroll howto-page" id="howToPageBattle">
+            <h2>HOW TO BATTLE</h2>
+            <!-- モード別の説明(TRAINING/BATTLE RUSH/EXTRA BATTLE/LOCAL V.S.の対戦中だけ表示)。見出しをタップすると開閉する(2026-10-01)。
+                 本文は下の非表示のテンプレート(howToTextXxx)から差し込む -->
+            <div class="records-section howto-tech" id="howToModeSection" style="display:none;">
+                <button class="records-section-title" onclick="toggleHowToSection('mode')">
+                    <span class="records-section-arrow" id="howToModeArrow">▶︎</span><span class="records-section-name" id="howToModeLabel"></span>
+                </button>
+                <div class="records-section-body howto-mode-body" id="howToModeBody"></div>
+            </div>
+            <!-- ワザ表(RECORDSのTECHNIQUESと同じ一覧)。RECORDSと同じく見出しをタップすると開閉する(2026-10-01) -->
+            <div class="records-section howto-tech" id="howToTechSection">
+                <button class="records-section-title" onclick="toggleHowToSection('tech')">
+                    <span class="records-section-arrow" id="howToTechArrow">▶︎</span><span class="records-section-name">TECHNIQUES</span>
+                    <span class="records-section-sub" id="howToTechCount"></span>
+                </button>
+                <div class="records-section-body" id="howToTechBody"></div>
+            </div>
+            <p><b>Ⅰ.デッキビルドでカードの枚数を選ぼう！</b><br>
+            PUNCH、UPPER、GUARDの3種類のカードで、<br>合計21枚になるようにデッキを作ろう。</p>
+
+            <p><b>Ⅱ.バトルは3つの相性で決まる！</b><br>
+            PUNCHはUPPERに勝ち、UPPERはGUARDに勝ち、<br>GUARDはPUNCHに勝つ。</p>
+
+            <img class="howto-img" src="assets/images/ui/howto.PNG" alt="" onerror="this.style.display='none';">
+
+            <p><b>Ⅲ.手札からカードを1〜5枚えらんでバトル！</b><br>
+            相手と1枚ずつカードを出し合って対決！<br>
+            カードの勝敗で攻撃が決まるぞ！</p>
+
+            <p>山札が全て無くなったら自動で補充される。</p>
+
+            <p><b>Ⅳ.相手の出方を読んでコンボをキメろ！</b><br>
+            それぞれのカードの特性と相手のクセを見極めて、連続コンボや必殺技で勝利しよう！</p>
+
+            <p><b>HINT〜どうしても勝てないときは？〜</b><br>
+            対戦相手の何気ない会話や仕草からクセがわかる。クセがわかったら、デッキビルドをして再挑戦だ！<br>
+            上のTECHNIQUESからワザのヒントも見られるぞ！</p>
+        </div>
+        <!-- HOW TO TRAINING -->
+        <div id="howToTextTraining" hidden>
+            <p>トレーニングモードでは<br>
+            カードを1〜5枚すきなように出して<br>
+            ワザやコンボを確かめることができる。<br>
+            実践に備えて、自分だけのコンボを<br>
+            見つけよう！</p>
+            <p class="howto-note">※1ターンごとに相手の体力は回復します。<br>
+            ※つかったワザやコンボ数はRECORDSには記録されません。</p>
+        </div>
+        <!-- HOW TO BATTLE RUSH -->
+        <div id="howToTextRush" hidden>
+            <p>バトルラッシュモードでは、<br>
+            25人の敵と連続で戦っていく特殊なモード。<br>
+            VALを操作して最速で敵を倒し、<br>
+            クリアタイムを更新しよう！</p>
+            <p class="howto-list">・VALのデッキは固定（（P）7枚・（G）7枚・（U）7枚）<br>
+            ・5人目、10人目、15人目、20人目、25人目にボスが出現します。<br>
+            ・体力はザコキャラを倒すと5回復、ボスを倒すと30回復します。<br>
+            ・25人倒すとクリアタイムが記録されます。<br>
+            ・記録は、OPTIONのRECORDSで確認できます。</p>
+        </div>
+        <!-- HOW TO EXTRA BATTLE -->
+        <div id="howToTextExtra" hidden>
+            <p>エクストラバトルでは、<br>
+            1ターンごとに出さないといけない<br>
+            カード枚数がランダムで決まる。</p>
+            <p>その場で出せる小ワザでダメージを<br>
+            与えるか、残りの手札をワザやコンボの<br>
+            ために温存するか。<br>
+            戦略的なバトルがためされる！</p>
+        </div>
+        <!-- HOW TO LOCAL V.S. -->
+        <div id="howToTextVersus" hidden>
+            <p>ローカルバーサスモードは、<br>
+            画面を分割して2人で対戦できる<br>
+            特別なモード。<br>
+            すきなキャラクターで<br>
+            読み合いバトルの勝者を目指せ！</p>
+            <p class="howto-list">・キャラクターごとにデッキ・性能が異なり、ストーリーで勝利すると追加されます。<br>
+            ・ステージ（背景）と、1ターンに出すカード枚数はランダムです。<br>
+            ・ワザやコンボ数はRECORDSには記録されません。</p>
+        </div>
+        <!-- HOW TO ONLINE V.S.(2026-10-03、オンライン対戦 段階4) -->
+        <div id="howToTextOnline" hidden>
+            <p>オンラインバーサスモードは、<br>
+            はなれた相手と通信して対戦できる<br>
+            特別なモード。<br>
+            どこかにいるライバルと<br>
+            読み合いバトルで勝負だ！</p>
+            <p class="howto-list">・RANDOM MATCHは自動でマッチングした相手と対戦できます。30秒見つからない時はCPU戦も選べます。<br>
+            ・FRIEND MATCHでは4桁の番号を伝えあって、友だちと対戦できます。<br>
+            ・名前（英数字4文字）は変更可能。名前と勝敗は相手にも表示されます（対戦中に相手の名前を<span class="tap-word">タップ</span>）。※名前を変更すると勝敗はリセットされます。<br>
+            ・制限時間はキャラ選択もカード選択も30秒。時間切れになるとランダムに選択されます。<br>
+            ・相手が一定時間戻らない場合は勝ち、通信切断やタイトルに戻ると、相手の勝ちになります。<br>
+            ・バトルスピード（2倍速）は使えません。</p>
+            <p>※RECORDSにはRANDOM MATCHで人と対戦した時だけ記録されます（CPU戦・FRIEND MATCH・引き分けは記録されません）。</p>
+        </div>
+    </div>
+</div>
+
+<!-- OPTIONポップアップ: appRoot直下に置き、タイトル/デッキ編成/バトルから開く -->
+<div id="optionOverlay" class="popup-overlay" onclick="closeOptionBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="closeOption()">×</button>
+        <div class="howto-content">
+            <h2>OPTION</h2>
+            <div class="option-row">
+                <span class="option-label">SOUND</span>
+                <div class="option-radio-group">
+                    <label class="option-radio"><input type="radio" name="soundRadio" value="on" onchange="setSound(true)">ON</label>
+                    <label class="option-radio"><input type="radio" name="soundRadio" value="off" onchange="setSound(false)">OFF</label>
+                </div>
+            </div>
+            <div class="option-row">
+                <span class="option-label">BGM VOLUME</span>
+                <div class="volume-control">
+                    <input type="range" id="bgmVolumeSlider" min="0" max="100" step="5" oninput="setBgmVolume(this.value/100)">
+                    <div class="volume-ticks">
+                        <span class="tick tick-long" style="left:0%;"></span>
+                        <span class="tick" style="left:10%;"></span>
+                        <span class="tick" style="left:20%;"></span>
+                        <span class="tick" style="left:30%;"></span>
+                        <span class="tick" style="left:40%;"></span>
+                        <span class="tick tick-long" style="left:50%;"></span>
+                        <span class="tick" style="left:60%;"></span>
+                        <span class="tick" style="left:70%;"></span>
+                        <span class="tick" style="left:80%;"></span>
+                        <span class="tick" style="left:90%;"></span>
+                        <span class="tick tick-long" style="left:100%;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="option-row">
+                <span class="option-label">SE VOLUME</span>
+                <div class="volume-control">
+                    <input type="range" id="seVolumeSlider" min="0" max="100" step="5" oninput="setSeVolume(this.value/100)">
+                    <div class="volume-ticks">
+                        <span class="tick tick-long" style="left:0%;"></span>
+                        <span class="tick" style="left:10%;"></span>
+                        <span class="tick" style="left:20%;"></span>
+                        <span class="tick" style="left:30%;"></span>
+                        <span class="tick" style="left:40%;"></span>
+                        <span class="tick tick-long" style="left:50%;"></span>
+                        <span class="tick" style="left:60%;"></span>
+                        <span class="tick" style="left:70%;"></span>
+                        <span class="tick" style="left:80%;"></span>
+                        <span class="tick" style="left:90%;"></span>
+                        <span class="tick tick-long" style="left:100%;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="option-row" id="optionCostumeRow" style="display:none;">
+                <span class="option-label">COSTUME</span>
+                <button onclick="openCostumeSelect()">VIEW</button>
+            </div>
+            <div class="option-row" id="optionGiftCodeRow">
+                <span class="option-label">GIFT CODE</span>
+                <button onclick="openGiftCodeInput()">ENTER</button>
+            </div>
+            <div class="option-row" id="optionRecordsRow">
+                <span class="option-label">RECORDS</span>
+                <button onclick="openRecords()">VIEW</button>
+            </div>
+            <div class="option-row" id="optionTermsRow">
+                <span class="option-label">ONLINE TERMS</span>
+                <button onclick="openOnlineTerms(false)">VIEW</button>
+            </div>
+            <div class="option-row" id="optionResetRow">
+                <span class="option-label">SAVE DATA</span>
+                <button id="resetProgressBtn" onclick="openResetConfirm()">RESET</button>
+            </div>
+        </div>
+        <div class="howto-footer" id="optionFooter">
+            <button id="optionRetryBtn" onclick="openRetryConfirm()">RETRY</button>
+            <button id="optionReturnBtn" onclick="openReturnConfirm()">RETURN TO TITLE</button>
+        </div>
+        <div id="resetConfirmPanel" class="confirm-panel">
+            <p class="confirm-text">本当に進行状況を<br>リセットしてもよろしいですか？</p>
+            <div class="confirm-btns">
+                <button onclick="closeResetConfirm()">CANCEL</button>
+                <button onclick="doResetProgress()" class="confirm-ok">OK</button>
+            </div>
+        </div>
+        <div id="retryConfirmPanel" class="confirm-panel">
+            <p class="confirm-text">戦いをやり直しますか？</p>
+            <div class="confirm-btns">
+                <button onclick="closeRetryConfirm()">CANCEL</button>
+                <button onclick="doOptionRetry()" class="confirm-ok">OK</button>
+            </div>
+        </div>
+        <div id="returnConfirmPanel" class="confirm-panel">
+            <p class="confirm-text" id="returnConfirmText">タイトルに戻りますか？<br>（ストーリーの進行状況は保存されます）</p>
+            <div class="confirm-btns">
+                <button onclick="closeReturnConfirm()">CANCEL</button>
+                <button onclick="doOptionReturnToTitle()" class="confirm-ok">OK</button>
+            </div>
+        </div>
+        <div id="giftCodeConfirmPanel" class="confirm-panel">
+            <p class="confirm-text">GIFT CODE<br>8桁のコードを入力してください</p>
+            <input type="text" id="giftCodeInput" class="gift-code-input" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="if (!event.isComposing) upperInputValue(this)" oncompositionend="upperInputValue(this)"> <!-- 変換中は書き換えない(2026-10-03) -->
+            <p class="confirm-text gift-code-error" id="giftCodeError" style="display:none;"></p>
+            <div class="confirm-btns">
+                <button onclick="closeGiftCodeInput()">CANCEL</button>
+                <button onclick="submitGiftCode()" class="confirm-ok">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ONLINE V.S.の利用規約・プライバシー(2026-10-12)。初めてONLINE V.S.を開く時は同意画面として、OPTIONの「ONLINE TERMS」からは読むだけの画面として開く。
+     OPTIONより後ろに置き(同じz-indexなので後ろの方が前面)、OPTIONの上に重ねて開けるようにしている。内容を変えたらscript.jsのONLINE_TERMS_VERSIONを上げる -->
+<div id="onlineTermsOverlay" class="popup-overlay" onclick="closeOnlineTermsBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="closeOnlineTerms()">×</button>
+        <div class="howto-content howto-scroll" id="onTermsBody">
+            <h2>ONLINE V.S. TERMS</h2>
+            <p>ONLINE V.S.（オンライン対戦）の利用規約・プライバシーについてです。使う前にお読みください。</p>
+            <p><b>■ 送信される情報</b><br>
+            ニックネーム（4文字）・通算の勝敗・選んだキャラ・対戦中の手札の選択・部屋の合言葉と時刻が、対戦相手とのやり取りのためにFirebase（Google）へ送られます。<br>
+            登録やログインは不要で、Firebaseの匿名ログインで自動的に作られるIDを使います。メールアドレス・氏名・位置情報などは集めません。アクセス解析や広告は使っていません。<br>
+            通信の仕組み上、Googleが接続元のIPアドレスなどの通信情報を処理します。</p>
+            <p><b>■ 使いみちと保管</b><br>
+            対戦を成立させ、進めるためだけに使います。部屋や待合室のデータは対戦が終わると消える仕組みですが、通信の状況によって一時的に残ることがあります。運営者がこれらを第三者へ提供することはありません。ニックネームと勝敗は、お使いの端末にも保存されます。</p>
+            <p><b>■ 禁止事項</b><br>
+            ・チート、不正ツール、通信の改ざん、バグの悪用<br>
+            ・わざと切断して、負けを避ける行為<br>
+            ・他の人が不快になるニックネームの使用<br>
+            ・サーバーへの過度な負荷をかける行為</p>
+            <p><b>■ 利用の制限</b><br>
+            上記に当たると運営者が判断した場合、ONLINE V.S.の提供を制限することがあります。</p>
+            <p><b>■ 免責</b><br>
+            通信の切断・遅延・不具合・データの消失などによる損害について、運営者は責任を負いません。ONLINE V.S.は予告なく内容を変更・終了することがあります。勝敗はお使いの端末の記録をそのまま表示する遊びの目安で、正確さは保証できません。</p>
+            <p><b>■ お問い合わせ</b><br>
+            X（<a href="https://x.com/born_web" target="_blank" rel="noopener noreferrer" style="color:#ffd23c;">https://x.com/born_web</a>）へのリプライまたはDMでご連絡ください。<br>
+            運営：BORN MAGAZINE　制定：2026年11月1日</p>
+        </div>
+        <div class="howto-footer" id="onTermsAskBtns" style="display:none;">
+            <button id="onTermsDisagreeBtn" onclick="onlineTermsDisagree()">同意しない</button>
+            <button id="onTermsAgreeBtn" onclick="onlineTermsAgree()">同意する</button>
+        </div>
+        <div class="howto-footer" id="onTermsCloseBtns" style="display:none;">
+            <button id="onTermsCloseBtn" onclick="closeOnlineTerms()">閉じる</button>
+        </div>
+    </div>
+</div>
+
+<!-- BONUS CONTENTS: タイトル画面専用。SUB STORY/SOUND TESTへの入口(何か1つでも解除されていれば表示) -->
+<div id="bonusContentsOverlay" class="popup-overlay" onclick="closeBonusContentsBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="closeAllBonus()">×</button>
+        <div class="howto-content">
+            <h2>BONUS CONTENTS</h2>
+            <div class="option-row" id="bonusSubStoryRow" style="display:none;">
+                <span class="option-label">SUB STORY</span>
+                <button onclick="openSubStoryList()">VIEW</button>
+            </div>
+            <div class="option-row" id="bonusSoundTestRow" style="display:none;">
+                <span class="option-label">SOUND TEST</span>
+                <button onclick="openSoundTest()">VIEW</button>
+            </div>
+            <div class="option-row" id="bonusCostumeRow" style="display:none;">
+                <span class="option-label">COSTUME</span>
+                <button onclick="openCostumeSelect(true)">VIEW</button>
+            </div>
+            <div class="option-row" id="bonusSpeedRow" style="display:none;">
+                <span class="option-label">BATTLE SPEED</span>
+                <div class="speed-select-group">
+                    <button id="bonusSpeedBtn1x" onclick="setBattleSpeed(false)">▶︎</button>
+                    <button id="bonusSpeedBtn2x" onclick="setBattleSpeed(true)">▶︎▶︎</button>
+                </div>
+            </div>
+            <p id="bonusSpeedNote" class="bonus-note" style="display:none;">※BATTLE SPEEDはバトル中にも変更可能です。</p>
+            <div class="bonus-reset-row">
+                <button id="bonusResetAllBtn" onclick="openBonusResetConfirm()">BONUS ALL RESET</button>
+            </div>
+        </div>
+        <div id="bonusResetConfirmPanel" class="confirm-panel">
+            <p class="confirm-text">全てのBONUSを取得前の状態に戻します。<br>BATTLE RUSHの記録と<br>ONLINE V.S.の勝敗も消えます。<br>よろしいですか？</p>
+            <div class="confirm-btns">
+                <button onclick="closeBonusResetConfirm()">CANCEL</button>
+                <button onclick="doResetAllBonus()" class="confirm-ok">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- サブストーリーバトルの「バトルしますか？」確認ポップアップ。BONUS CONTENTS等、他のオーバーレイの表示状態に
+     依存せず常に表示できるよう、あえて独立した最上位要素にしている(#confirm-panel-standaloneでposition:fixedにする)。 -->
+<!-- SUB STORYのSKIP(勝ったことがある人のみ)の確認(2026-10-02) -->
+<div id="onNameConfirmPanel" class="confirm-panel confirm-panel-standalone">
+    <p class="confirm-text">名前を変更すると、<br>これまでの勝敗がリセットされます。<br>よろしいですか？</p>
+    <div class="confirm-btns">
+        <button onclick="onlineNameConfirmCancel()">CANCEL</button>
+        <button onclick="onlineNameConfirmOk()" class="confirm-ok">OK</button>
+    </div>
+</div>
+<div id="subStorySkipConfirmPanel" class="confirm-panel confirm-panel-standalone">
+    <p class="confirm-text">バトル直前までスキップしますか？</p>
+    <div class="confirm-btns">
+        <button onclick="closeSubStorySkipConfirm()">NO</button>
+        <button onclick="acceptSubStorySkip()" class="confirm-ok">YES</button>
+    </div>
+</div>
+<div id="substoryBattleConfirmPanel" class="confirm-panel confirm-panel-standalone">
+    <p class="confirm-text">バトルしますか？</p>
+    <div class="confirm-btns">
+        <button onclick="declineSubstoryBattle()">SKIP</button>
+        <button onclick="acceptSubstoryBattle()" class="confirm-ok">YES</button>
+    </div>
+</div>
+
+<!-- SUB STORY一覧/閲覧ポップアップ -->
+<!-- STORY選択(2026-10-02): 倒した章と、次に挑む章から選べる。まだの章は？？？ -->
+<div id="storySelectOverlay" class="popup-overlay" onclick="if (event.target.id === 'storySelectOverlay') closeStorySelect()">
+    <div class="popup-panel story-select-panel">
+        <button class="popup-close" onclick="closeStorySelect()">×</button>
+        <div class="howto-content">
+            <h2>STORY選択</h2>
+            <div id="storySelectRows"></div>
+        </div>
+    </div>
+</div>
+
+<div id="subStoryOverlay" class="popup-overlay" onclick="closeSubStoryBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="closeSubStory()">×</button>
+        <div class="howto-content">
+            <h2>SUB STORY</h2>
+            <div id="subStoryListView">
+                <div id="subStoryListRows"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- サブストーリー閲覧: 戦う前のストーリーシーンと同じフルスクリーン表示。読み終えるとSUB STORYの一覧(ポップアップ)へ戻る -->
+<div id="sceneSubStoryRead" class="scene">
+    <div id="subStoryBlock" class="cine-block" onclick="onSubStoryTap()">
+        <div id="subStoryImgArea" class="cine-img">
+            <div id="subStoryImgFallback" class="cine-img-fallback"></div>
+            <div id="subStoryFlash"></div>
+        </div>
+        <div class="cine-textbox"><p id="subStoryText" class="cine-text"></p></div>
+    </div>
+    <button id="backSubStoryBtn" class="text-btn" onclick="backToSubStoryList()">◀︎BACK</button>
+    <button id="subStoryReadSkipBtn" class="text-btn" style="display:none;" onclick="openSubStorySkipConfirm()">▶︎SKIP</button>
+</div>
+
+<!-- SOUND TESTポップアップ -->
+<div id="soundTestOverlay" class="popup-overlay" onclick="closeSoundTestBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="soundTestBack()">×</button>
+        <div class="howto-content">
+            <h2>SOUND TEST</h2>
+            <div id="soundTestBody"></div>
+        </div>
+    </div>
+</div>
+
+<!-- COSTUME選択ポップアップ -->
+<!-- タイトルカード(2026-10-02): 本編の章タイトル(story_title_{番号}.PNG)とSUB STORYのタイトル(substory_title_{番号}.PNG)。
+     APNG可。画像が無ければ文字で出す。自動では進まず、タップで次へ進む。文面はscript.jsのSTORY_CHAPTER_TITLES -->
+<div id="titleCardOverlay" onclick="onTitleCardTap()">
+    <img id="titleCardImg" class="apng-card-img" alt="" style="display:none;">
+    <div id="titleCardText"></div>
+    <div id="titleCardHint">▼</div>
+</div>
+<!-- チュートリアル(2026-10-01): はじめてのデッキ編成・Noah戦で一度だけ出す。文面はscript.jsのTUTORIAL_PAGES -->
+<div id="tutorialOverlay" class="popup-overlay">
+    <div class="popup-panel tutorial-panel">
+        <div class="howto-content">
+            <h2 id="tutorialTitle"></h2>
+            <div id="tutorialBody" class="tutorial-body"></div>
+            <div class="tutorial-footer">
+                <span id="tutorialPageNum"></span>
+                <button id="tutorialNextBtn" class="tutorial-next-btn" onclick="nextTutorialPage()">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- RECORDS(BONUS内): 解放状況・入手方法・各種記録の一覧 -->
+<div id="recordsOverlay" class="popup-overlay" onclick="closeRecordsBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="closeRecords()">×</button>
+        <div class="howto-content">
+            <h2>RECORDS</h2>
+            <div id="recordsBody"></div>
+        </div>
+    </div>
+</div>
+<div id="costumeOverlay" class="popup-overlay" onclick="closeCostumeBackdrop(event)">
+    <div class="popup-panel">
+        <button class="popup-close" onclick="closeCostume()">×</button>
+        <div class="howto-content">
+            <h2>COSTUME</h2>
+            <div id="costumeRows"></div>
+            <p class="bonus-note">※バトル中の見た目のみ変化します。性能は変化しません。</p>
+            <p id="costumeFromBonusNote" class="costume-from-bonus-note" style="display:none;">※STORYやTRAININGのバトル中いつでもOPTIONから見た目を変更できます。</p>
+        </div>
+    </div>
+</div>
+
+</div>
+<script>
+/* 画面フィット(2026-10-08): 横画面・PC・タブレットでは、幅520pxを基準にした縦1列の画面を、見える領域いっぱいまで拡大縮小する(CSS transform)。
+   縦持ちスマホ(幅520px未満で縦長)は従来どおり。LOCAL V.S.(body.versus-layout)は1台を向かい合わせで使うため対象外。
+   起動直後のチラつきを避けるため、script.min.jsを待たずここで実行する */
+(function () {
+    var DESIGN_W = 520, root = document.documentElement;
+    function fit() {
+        var vw = window.innerWidth, vh = window.innerHeight;
+        var app = document.getElementById('appRoot'), body = document.body;
+        if (!app || !body) return;
+        var versus = body.classList.contains('versus-layout');
+        if (versus || (vw < DESIGN_W && vw <= vh)) {
+            root.classList.remove('fit-scale'); if (body.classList.contains('has-side')) body.classList.remove('has-side');
+            if (body.classList.contains('has-side-wide')) body.classList.remove('has-side-wide'); // class変更の監視で再実行されるため、変化があるときだけ触る
+            root.style.removeProperty('--fit-scale'); root.style.removeProperty('--side-w');
+            return;
+        }
+        root.classList.add('fit-scale'); // 幅520px固定のレイアウトにしてから高さを測る
+        var s = Math.min(vw / DESIGN_W, vh / app.offsetHeight);
+        var side = Math.max(0, (vw - DESIGN_W * s) / 2);
+        root.style.setProperty('--fit-scale', s.toFixed(4));
+        root.style.setProperty('--side-w', Math.floor(side) + 'px');
+        var want = side >= 90;
+        if (body.classList.contains('has-side') !== want) body.classList.toggle('has-side', want);
+        var wide = side >= 230; // ワザ一覧(#sideTech)を置ける広さ
+        if (body.classList.contains('has-side-wide') !== wide) body.classList.toggle('has-side-wide', wide);
+    }
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+    new MutationObserver(fit).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    fit();
+})();
+</script>
+<script>
+// js/script.js本体(ファイルサイズが最も大きい単一ファイルで、これのダウンロード完了までboot()が動かずNOW LOADINGが続く)を、
+// 通常のscriptタグではなくfetch+ReadableStreamで取得し、実際に受信したバイト数からNOW LOADINGのゲージを更新する。
+// fetch自体やストリーム読み取りに失敗した場合(古いブラウザ、CORS等)は、必ず通常のscriptタグ読み込みにフォールバックする
+// (ゲージは動かないが、ゲームの起動自体は今まで通り保証される)。
+(function() {
+    // 配信用の軽量版(コメント・空白を除いたもの)。編集はjs/script.jsで行い、tools/build.shで作り直す(2026-10-02)。
+    // ?v=はバージョン(.title-versionの末尾3桁)と同じ番号にし、更新のたびに上げる(古いものがキャッシュに残らないように)
+    var SCRIPT_URL = 'js/script.min.js?v=1001';
+    var bar = document.getElementById('nowLoadingBar');
+    var percentEl = document.getElementById('nowLoadingPercent');
+    var settled = false; // フォールバック(タイムアウト)と正常読み込みの、どちらか一方だけが実行されるようにするためのフラグ
+
+    function loadViaPlainTag() {
+        var s = document.createElement('script');
+        s.src = SCRIPT_URL;
+        document.body.appendChild(s);
+    }
+
+    function setProgress(pct) {
+        if (bar) bar.style.width = pct + '%';
+        if (percentEl) percentEl.innerText = pct + '%';
+    }
+
+    if (!window.fetch || !window.ReadableStream) {
+        loadViaPlainTag(); // 必要なAPIが無い環境は素直にscriptタグで読み込む
+        return;
+    }
+
+    var indeterminateTimer = null;
+
+    // fetch+ReadableStreamによる読み込みが何らかの理由で完了しない(ハングする)場合の安全策。
+    // 15秒経っても決着(成功/失敗いずれも)しなければ、確実に動作する通常のscriptタグ読み込みへ切り替える。
+    // これにより、NOW LOADINGが永久に進まなくなる事態を避ける。
+    var fallbackTimer = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        if (indeterminateTimer) clearInterval(indeterminateTimer);
+        loadViaPlainTag();
+    }, 15000);
+
+    // 2026-10-02: 以前はcache:'no-store'で毎回すべてダウンロードし直していたが、2回目以降の起動が遅くなるため、
+    // URLに?v=(バージョン)を付けて古いものを避けつつ、同じバージョンの間はブラウザのキャッシュを使うようにした
+    fetch(SCRIPT_URL).then(function(response) {
+        if (!response.ok || !response.body) throw new Error('fetch failed: ' + response.status);
+        var totalStr = response.headers.get('Content-Length');
+        var total = totalStr ? parseInt(totalStr, 10) : 0;
+        var reader = response.body.getReader();
+        var chunks = [];
+        var loaded = 0;
+
+        if (!total) {
+            // サーバーがContent-Lengthを返さない場合、正確な%が出せないため往復インジケータにする
+            if (percentEl) percentEl.style.display = 'none';
+            var dir = 1, pos = 0;
+            indeterminateTimer = setInterval(function() {
+                pos += dir * 4;
+                if (pos >= 70 || pos <= 0) dir *= -1;
+                if (bar) bar.style.width = pos + '%';
+            }, 80);
+        }
+
+        function pump() {
+            return reader.read().then(function(result) {
+                if (result.done) {
+                    if (indeterminateTimer) { clearInterval(indeterminateTimer); indeterminateTimer = null; }
+                    setProgress(100);
+                    return new Blob(chunks).text();
+                }
+                chunks.push(result.value);
+                loaded += result.value.length;
+                if (total > 0) setProgress(Math.min(99, Math.round((loaded / total) * 100)));
+                return pump();
+            });
+        }
+        return pump();
+    }).then(function(code) {
+        if (settled) return; // タイムアウトで既にフォールバック済みなら、二重に実行しない
+        settled = true;
+        clearTimeout(fallbackTimer);
+        var s = document.createElement('script');
+        s.text = code; // 取得済みのコードをそのまま実行する(通常のscriptタグ読み込みと等価)
+        document.body.appendChild(s);
+    }).catch(function() {
+        if (settled) return; // タイムアウトで既にフォールバック済みなら、二重に実行しない
+        settled = true;
+        clearTimeout(fallbackTimer);
+        if (indeterminateTimer) clearInterval(indeterminateTimer);
+        loadViaPlainTag();
+    });
+})();
+</script>
+</body>
+</html>
