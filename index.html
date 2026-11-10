@@ -17,7 +17,7 @@
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="ja_JP">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="stylesheet" href="css/style.min.css?v=1006"> <!-- 配信用の軽量版。編集はcss/style.cssで行い、tools/build.shで作り直す(2026-10-02) -->
+    <link rel="stylesheet" href="css/style.min.css?v=1007"> <!-- 配信用の軽量版。編集はcss/style.cssで行い、tools/build.shで作り直す(2026-10-02) -->
 
     <!-- 技名ポップ用の8bit風フォント(Press Start 2P、SIL OFL。2026-10-03に手書き風Permanent Markerから変更)。
          ゲームに同梱し(assets/fonts/)、ネット環境に左右されず表示する。canvasで使うため先読みしておく -->
@@ -144,7 +144,7 @@
     <button id="optionBtn" class="text-btn" onclick="openOption()" disabled>OPTION</button>
     <button class="howto-btn howto-corner" onclick="openHowTo()">HOW<br>TO</button>
     <div class="title-copyright">©BORN MAGAZINE 2026</div>
-    <div class="title-version">ver. 1.0.6</div> <!-- 2026-10-03: ロゴ直下から、画面下の中央(©表記と同じ高さ)へ移動 -->
+    <div class="title-version">ver. 1.0.7</div> <!-- 2026-10-03: ロゴ直下から、画面下の中央(©表記と同じ高さ)へ移動 -->
 </div>
 
 <!-- デッキ編成シーン: 21枚固定・内訳自由 -->
@@ -232,6 +232,11 @@
                 <button class="vs-ready-btn online-join-btn" onclick="onlineJoinRoom()">JOIN ROOM</button>
             </div>
             <div class="online-note">相手から聞いた番号を入れて入室します</div>
+        </div>
+        <div class="online-or">OR</div>
+        <div class="online-card online-card-cpu">
+            <button class="vs-ready-btn online-main-btn" onclick="onlineStartCpuDirect()">VS CPU</button>
+            <div class="online-note">通信せず、すぐにCPUと対戦します</div>
         </div>
         <div id="onLobbyMsg" class="online-msg"></div>
     </div>
@@ -560,7 +565,7 @@
             特別なモード。<br>
             どこかにいるライバルと<br>
             読み合いバトルで勝負だ！</p>
-            <p class="howto-list">・RANDOM MATCHは自動でマッチングした相手と対戦できます。30秒見つからない時はCPU戦も選べます。<br>
+            <p class="howto-list">・RANDOM MATCHは自動でマッチングした相手と対戦できます。30秒見つからない時はCPU戦も選べます(最初から対戦したい時は、画面下のVS CPUから）。<br>
             ・FRIEND MATCHでは4桁の番号を伝えあって、友だちと対戦できます。<br>
             ・名前（英数字4文字）は変更可能。名前と勝敗は相手にも表示されます（対戦中に相手の名前を<span class="tap-word">タップ</span>）。※名前を変更すると勝敗はリセットされます。<br>
             ・制限時間はキャラ選択もカード選択も30秒。時間切れになるとランダムに選択されます。<br>
@@ -914,7 +919,7 @@
 (function() {
     // 配信用の軽量版(コメント・空白を除いたもの)。編集はjs/script.jsで行い、tools/build.shで作り直す(2026-10-02)。
     // ?v=はバージョン(.title-versionの末尾3桁)と同じ番号にし、更新のたびに上げる(古いものがキャッシュに残らないように)
-    var SCRIPT_URL = 'js/script.min.js?v=1006';
+    var SCRIPT_URL = 'js/script.min.js?v=1007';
     var bar = document.getElementById('nowLoadingBar');
     var percentEl = document.getElementById('nowLoadingPercent');
     var settled = false; // フォールバック(タイムアウト)と正常読み込みの、どちらか一方だけが実行されるようにするためのフラグ
